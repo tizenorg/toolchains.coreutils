@@ -237,7 +237,7 @@ rm -rf $RPM_BUILD_ROOT
 /bin/sleep
 /bin/sort
 /bin/stty
-%attr(4755,root,root) /bin/su
+%exclude /bin/su
 /bin/sync
 /bin/touch
 /bin/true
