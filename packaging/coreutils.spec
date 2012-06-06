@@ -61,6 +61,13 @@ Provides: mktemp
 These are the GNU core utilities.  This package is the combination of
 the old GNU fileutils, sh-utils, and textutils packages.
 
+%package su
+Summary: System login tool(su)
+Group: System/Base
+
+%description su
+System login tool(su), which is used for OBS build environment.
+
 %prep
 %setup -q -b 1
 
@@ -237,7 +244,6 @@ rm -rf $RPM_BUILD_ROOT
 /bin/sleep
 /bin/sort
 /bin/stty
-%exclude /bin/su
 /bin/sync
 /bin/touch
 /bin/true
@@ -248,3 +254,5 @@ rm -rf $RPM_BUILD_ROOT
 %_sbindir/chroot
 #/sbin/runuser
 
+%files su
+%attr(4755,root,root) /bin/su

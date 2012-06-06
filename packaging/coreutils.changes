@@ -1,3 +1,6 @@
+* Wed Jun 6 2012 Junfeng Dong <junfeng.dong@intel.com> - 6.9
+- Pack /bin/su into subpackage for OBS build environment.
+
 * Fri Jun  1 15:06:59 CST 2012 Arron <arron.wang@intel.com> - 6.9
 - Exclude su file from package since it is include in package login
 - Add tag to trigger obs build
