@@ -1,72 +1,68 @@
 %define nopam 1
+%define mktemp_version 1.7
 
-Summary: The GNU core utilities: a set of tools commonly used in shell scripts
-Name:    coreutils
-Version: 6.9
-Release: 9
-License: GPLv2+
+Name:           coreutils
+Version:        6.9
+Release:        9
+License:        GPL-2.0+
+Summary:        The GNU core utilities: a set of tools commonly used in shell scripts
+Url:            http://www.gnu.org/software/coreutils/
+Group:          System Environment/Base
+Source0:        ftp://ftp.gnu.org/gnu/%{name}/%{name}-%{version}.tar.bz2
+Source1:        mktemp-%{mktemp_version}.tar.gz
+Source101:      coreutils-DIR_COLORS
+Source102:      coreutils-DIR_COLORS.xterm
+Source105:      coreutils-colorls.sh
+Source106:      coreutils-colorls.csh
+Source200:      coreutils-su.pamd
+Source202:      coreutils-su-l.pamd
+# FIXME
 Epoch: 1
-Group:   System Environment/Base
-Url:     http://www.gnu.org/software/coreutils/
-Source0: ftp://ftp.gnu.org/gnu/%{name}/%{name}-%{version}.tar.bz2
-Source1:  mktemp-1.5.tar.gz
-Source101:  coreutils-DIR_COLORS
-Source102:  coreutils-DIR_COLORS.xterm
-Source105:  coreutils-colorls.sh
-Source106:  coreutils-colorls.csh
-Source200:  coreutils-su.pamd
-Source202:  coreutils-su-l.pamd
 
 # From upstream
-Patch1: coreutils-futimens.patch
-Patch2: coreutils-ls-x.patch
-Patch3: coreutils-6.9-cp-i-u.patch
+Patch1:         coreutils-futimens.patch
+Patch2:         coreutils-ls-x.patch
+Patch3:         coreutils-6.9-cp-i-u.patch
 
 # Our patches
-Patch100: coreutils-chgrp.patch
+Patch100:       coreutils-chgrp.patch
 
 # sh-utils
-Patch703: sh-utils-2.0.11-dateman.patch
-Patch704: sh-utils-1.16-paths.patch
+Patch703:       sh-utils-2.0.11-dateman.patch
+Patch704:       sh-utils-1.16-paths.patch
 # RMS will never accept the PAM patch because it removes his historical
 # rant about Twenex and the wheel group, so we'll continue to maintain
 # it here indefinitely.
-Patch706: coreutils-pam.patch
-Patch713: coreutils-4.5.3-langinfo.patch
-Patch715: coreutils-4.5.3-sysinfo.patch
+Patch706:       coreutils-pam.patch
+Patch713:       coreutils-4.5.3-langinfo.patch
+Patch715:       coreutils-4.5.3-sysinfo.patch
 
 # (sb) lin18nux/lsb compliance
-Patch800: coreutils-i18n.patch
+Patch800:       coreutils-i18n.patch
 
-Patch900: coreutils-setsid.patch
-Patch907: coreutils-5.2.1-runuser.patch
-Patch908: coreutils-getgrouplist.patch
-Patch912: coreutils-overflow.patch
-Patch915: coreutils-split-pam.patch
-Patch916: coreutils-getfacl-exit-code.patch
+Patch900:       coreutils-setsid.patch
+Patch907:       coreutils-5.2.1-runuser.patch
+Patch908:       coreutils-getgrouplist.patch
+Patch912:       coreutils-overflow.patch
+Patch915:       coreutils-split-pam.patch
+Patch916:       coreutils-getfacl-exit-code.patch
 
-Patch1001: mktemp-1.5-build.patch
+Patch1001:      mktemp-%{mktemp_version}-build.patch
 
-BuildRequires: libacl-devel
-BuildRequires: bison
-BuildRequires: autoconf >= 2.58
-BuildRequires: automake >= 1.10
+BuildRequires:  autoconf >= 2.58
+BuildRequires:  automake >= 1.10
+BuildRequires:  bison
+BuildRequires:  libacl-devel
 %{?!nopam:BuildRequires: pam-devel}
 
 %{?!nopam:Requires: pam >= 0.66-12}
 
-Provides: mktemp
+Provides:       mktemp
+Provides:       coreutils-su
 
 %description
 These are the GNU core utilities.  This package is the combination of
 the old GNU fileutils, sh-utils, and textutils packages.
-
-%package su
-Summary: System login tool(su)
-Group: System/Base
-
-%description su
-System login tool(su), which is used for OBS build environment.
 
 %prep
 %setup -q -b 1
@@ -103,18 +99,13 @@ chmod a+x tests/sort/sort-mb-tests
 chmod a+x tests/ls/x-option
 
 %build
-pushd ../mktemp-1.5
+pushd ../mktemp-%{mktemp_version}
 patch -p1 < %{PATCH1001}
 %configure
 make
 popd
 
-%ifarch s390 s390x
-# Build at -O1 for the moment (bug #196369).
-export CFLAGS="$RPM_OPT_FLAGS -fPIC -O1"
-%else
-export CFLAGS="$RPM_OPT_FLAGS -fpic"
-%endif
+export CFLAGS="%{optflags} -fpic"
 %{expand:%%global optflags %{optflags} -D_GNU_SOURCE=1}
 %configure %{?!nopam:--enable-pam} \
             --disable-nls \
@@ -131,64 +122,59 @@ sed -i -e 's,/etc/utmp,/var/run/utmp,g;s,/etc/wtmp,/var/run/wtmp,g' doc/coreutil
 #make check
 
 %install
-rm -rf $RPM_BUILD_ROOT
 
-pushd ../mktemp-1.5
-make bindir=$RPM_BUILD_ROOT/bin mandir=$RPM_BUILD_ROOT/usr/share/man install 
+pushd ../mktemp-%{mktemp_version}
+make bindir=%{buildroot}/bin mandir=%{buildroot}%{_mandir} install
 popd
 
 
 
-make DESTDIR=$RPM_BUILD_ROOT install
+%make_install
 
 # man pages are not installed with make install
-make mandir=$RPM_BUILD_ROOT%{_mandir} install-man
+make mandir=%{buildroot}%{_mandir} install-man
 
 # fix japanese catalog file
-if [ -d $RPM_BUILD_ROOT%{_datadir}/locale/ja_JP.EUC/LC_MESSAGES ]; then
-   mkdir -p $RPM_BUILD_ROOT%{_datadir}/locale/ja/LC_MESSAGES
-   mv $RPM_BUILD_ROOT%{_datadir}/locale/ja_JP.EUC/LC_MESSAGES/*mo \
-      $RPM_BUILD_ROOT%{_datadir}/locale/ja/LC_MESSAGES
-   rm -rf $RPM_BUILD_ROOT%{_datadir}/locale/ja_JP.EUC
+if [ -d %{buildroot}%{_datadir}/locale/ja_JP.EUC/LC_MESSAGES ]; then
+   mkdir -p %{buildroot}%{_datadir}/locale/ja/LC_MESSAGES
+   mv %{buildroot}%{_datadir}/locale/ja_JP.EUC/LC_MESSAGES/*mo \
+      %{buildroot}%{_datadir}/locale/ja/LC_MESSAGES
+   rm -rf %{buildroot}%{_datadir}/locale/ja_JP.EUC
 fi
 
 bzip2 -9f ChangeLog
 
 # let be compatible with old fileutils, sh-utils and textutils packages :
-mkdir -p $RPM_BUILD_ROOT{/bin,%_bindir,%_sbindir,/sbin}
-%{?!nopam:mkdir -p $RPM_BUILD_ROOT%_sysconfdir/pam.d}
+mkdir -p %{buildroot}{/bin,%{_bindir},%{_sbindir},/sbin}
+%{?!nopam:mkdir -p %{buildroot}%{_sysconfdir}/pam.d}
 for f in basename cat chgrp chmod chown cp cut date dd df echo env false link ln ls mkdir mknod mv nice pwd rm rmdir sleep sort stty sync touch true uname unlink
 do
-    mv $RPM_BUILD_ROOT{%_bindir,/bin}/$f 
+    mv %{buildroot}{%{_bindir},/bin}/$f
 done
 
 # chroot was in /usr/sbin :
-mv $RPM_BUILD_ROOT{%_bindir,%_sbindir}/chroot
-# {cat,sort,cut} were previously moved from bin to /usr/bin and linked into 
-for i in env cut; do ln -sf ../../bin/$i $RPM_BUILD_ROOT/usr/bin; done
+mv %{buildroot}{%{_bindir},%{_sbindir}}/chroot
+# {cat,sort,cut} were previously moved from bin to /usr/bin and linked into
+for i in env cut; do ln -sf ../../bin/$i %{buildroot}%{_prefix}/bin; done
 
-mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/profile.d
-install -p -c -m644 %SOURCE101 $RPM_BUILD_ROOT%{_sysconfdir}/DIR_COLORS
-install -p -c -m644 %SOURCE102 $RPM_BUILD_ROOT%{_sysconfdir}/DIR_COLORS.xterm
-install -p -c -m644 %SOURCE105 $RPM_BUILD_ROOT%{_sysconfdir}/profile.d/colorls.sh
-install -p -c -m644 %SOURCE106 $RPM_BUILD_ROOT%{_sysconfdir}/profile.d/colorls.csh
+mkdir -p %{buildroot}%{_sysconfdir}/profile.d
+install -p -c -m644 %{S:101} %{buildroot}%{_sysconfdir}/DIR_COLORS
+install -p -c -m644 %{S:102} %{buildroot}%{_sysconfdir}/DIR_COLORS.xterm
+install -p -c -m644 %{S:105} %{buildroot}%{_sysconfdir}/profile.d/colorls.sh
+install -p -c -m644 %{S:106} %{buildroot}%{_sysconfdir}/profile.d/colorls.csh
 
 # su
-install -m 4755 src/su $RPM_BUILD_ROOT/bin
-#install -m 755 src/runuser $RPM_BUILD_ROOT/sbin
+install -m 4755 src/su %{buildroot}/bin
+#install -m 755 src/runuser %{buildroot}/sbin
 
 # These come from util-linux and/or procps.
 for i in hostname uptime kill ; do
-    rm $RPM_BUILD_ROOT{%_bindir/$i,%_mandir/man1/$i.1}
+    rm %{buildroot}{%{_bindir}/$i,%{_mandir}/man1/$i.1}
 done
 
-%{?!nopam:install -p -m 644 %SOURCE200 $RPM_BUILD_ROOT%_sysconfdir/pam.d/su}
-%{?!nopam:install -p -m 644 %SOURCE202 $RPM_BUILD_ROOT%_sysconfdir/pam.d/su-l}
-#%{?!nopam:install -p -m 644 %SOURCE201 $RPM_BUILD_ROOT%_sysconfdir/pam.d/runuser}
-#%{?!nopam:install -p -m 644 %SOURCE203 $RPM_BUILD_ROOT%_sysconfdir/pam.d/runuser-l}
+%{?!nopam:install -p -m 644 %{S:200} %{buildroot}%{_sysconfdir}/pam.d/su}
+%{?!nopam:install -p -m 644 %{S:202} %{buildroot}%{_sysconfdir}/pam.d/su-l}
 
-# Compress ChangeLogs from before the fileutils/textutils/etc merge
-bzip2 -f9 old/*/C*
 
 # Use hard links instead of symbolic links for LC_TIME files (bug #246729).
 find %{buildroot}%{_datadir}/locale -type l | \
@@ -200,24 +186,15 @@ find %{buildroot}%{_datadir}/locale -type l | \
  done)
 
 
-# (sb) Deal with Installed (but unpackaged) file(s) found
-rm -f $RPM_BUILD_ROOT%{_infodir}/dir
 
-%clean
-rm -rf $RPM_BUILD_ROOT
+%remove_docs
 
-
-%docs_package
-
-
-
-%files 
-%defattr(-,root,root,-)
+%files
 %config(noreplace) %{_sysconfdir}/DIR_COLORS*
 %{_sysconfdir}/profile.d/*
 %{?!nopam:%config(noreplace) %{_sysconfdir}/pam.d/su}
 %{?!nopam:%config(noreplace) %{_sysconfdir}/pam.d/su-l}
-%doc COPYING 
+%doc COPYING
 /bin/basename
 /bin/cat
 /bin/chgrp
@@ -250,9 +227,6 @@ rm -rf $RPM_BUILD_ROOT
 /bin/uname
 /bin/unlink
 /bin/mktemp
-%_bindir/*
-%_sbindir/chroot
-#/sbin/runuser
-
-%files su
+%{_bindir}/*
+%{_sbindir}/chroot
 %attr(4755,root,root) /bin/su
