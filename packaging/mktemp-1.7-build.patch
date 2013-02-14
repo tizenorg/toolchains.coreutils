@@ -1,0 +1,16 @@
+diff -Nur mktemp-1.7.orig/Makefile.in mktemp-1.7/Makefile.in
+--- mktemp-1.7.orig/Makefile.in	2010-04-26 00:00:38.000000000 +0100
++++ mktemp-1.7/Makefile.in	2012-07-02 13:30:11.119663861 +0100
+@@ -95,10 +95,10 @@
+ 	    $(DESTDIR)$(mandir)/man1
+ 
+ install-binaries: $(PROG)
+-	$(INSTALL) -m 0555 -s $(PROG) $(DESTDIR)$(bindir)/$(PROG)
++	$(INSTALL) -m 0755 -s $(PROG) $(DESTDIR)$(bindir)/$(PROG)
+ 
+ install-man:
+-	$(INSTALL) -m 0444 $(srcdir)/mktemp.$(mantype) \
++	$(INSTALL) -m 0644 $(srcdir)/mktemp.$(mantype) \
+ 	    $(DESTDIR)$(mandir)/man1/mktemp.1
+ 
+ check:
