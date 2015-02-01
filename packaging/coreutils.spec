@@ -100,7 +100,7 @@ chmod a+x tests/ls/x-option
 pushd ../mktemp-%{mktemp_version}
 patch -p1 < %{PATCH1001}
 %configure
-make
+make %{?_smp_mflags}
 popd
 
 %ifarch s390 s390x
@@ -113,16 +113,13 @@ export CFLAGS="$RPM_OPT_FLAGS -fpic"
 %configure %{?!nopam:--enable-pam} \
             --disable-nls \
            DEFAULT_POSIX2_VERSION=200112 alternative=199209 || :
-make all \
+make %{?_smp_mflags} all \
          %{?!nopam:CPPFLAGS="-DUSE_PAM"} \
          su_LDFLAGS="-pie %{?!nopam:-lpam -lpam_misc}"
 
 # XXX docs should say /var/run/[uw]tmp not /etc/[uw]tmp
 sed -i -e 's,/etc/utmp,/var/run/utmp,g;s,/etc/wtmp,/var/run/wtmp,g' doc/coreutils.texi
 
-
-%check
-#make check
 
 %install
 rm -rf $RPM_BUILD_ROOT
